@@ -1,16 +1,17 @@
+require('dotenv').config();
+
+const express = require('express');
+const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
- const express = require('express');
- const cors = require('cors');
 
 const app = express()
 app.use(express.json())
 app.use(cors())
 const port = process.env.PORT || 5000;
-// ScreenVibe
-// fO1rhQJ7zdkdGNnS
 
 
-const uri = "mongodb+srv://ScreenVibe:fO1rhQJ7zdkdGNnS@cluster0.kpzks.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+
+const uri = `mongodb+srv://${process.env.MONGODBNAME}:${process.env.MONGODBPASS}@cluster0.kpzks.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -23,7 +24,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
     const moviesCollection = client.db('movies').collection("movie");
     const favoritesCollection = client.db('movies').collection("favorite")
     
@@ -44,7 +45,6 @@ async function run() {
       } else {
           result = await moviesCollection.find().toArray();
       }
-  console.log(searchParams, result);
 
   const actionDrama = await moviesCollection.find({ genre: { $in: ['drama', 'comedy'] } }).toArray();
     
@@ -68,8 +68,12 @@ async function run() {
     app.delete('/movie-delete/:id', async(req, res)=>{
         const id = req.params.id;
         const query =  {_id: new ObjectId(id)}
+        // console.log(typeof query);
+
+        const favDel = await favoritesCollection.deleteMany({id:id})
+        console.log(favDel);
         const result = await moviesCollection.deleteOne(query)
-        res.send(result)
+        res.send({result})
         
     })
     app.post('/favorite', async(req, res)=>{
@@ -98,7 +102,7 @@ async function run() {
     app.get('/my-favorite/:email', async(req, res)=>{
       const email = req.params.email
      const result = await favoritesCollection.find({email:email}).toArray()
-      console.log(result);
+      // console.log(result);
       res.send(result)
 
     })
