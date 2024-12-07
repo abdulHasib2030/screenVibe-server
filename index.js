@@ -25,14 +25,30 @@ async function run() {
   try {
     await client.connect();
     const moviesCollection = client.db('movies').collection("movie");
+    const favoritesCollection = client.db('movies').collection("favorite")
     
     // await client.db("admin").command({ ping: 1 });
 
     app.get('/all-movies', async(req, res)=>{
-        const cursor = moviesCollection.find()
-        const result = await cursor.toArray()
+        // const cursor = moviesCollection.find()
+        // const result = await cursor.toArray()
         // console.log(result);
-        res.send(result)
+      const {searchParams} = req.query
+
+      let option = {};
+      let result = [];
+
+      if (searchParams && searchParams.trim() !== "") {
+          option = { title: { $regex: searchParams, $options: "i" } };
+          result = await moviesCollection.find(option).toArray();
+      } else {
+          result = await moviesCollection.find().toArray();
+      }
+  console.log(searchParams, result);
+
+  const actionDrama = await moviesCollection.find({ genre: { $in: ['drama', 'comedy'] } }).toArray();
+    
+        res.send({result, actionDrama})
     })
 
     app.post('/add-movie',  async(req, res)=>{
@@ -49,6 +65,77 @@ async function run() {
         res.send(result)
     })
 
+    app.delete('/movie-delete/:id', async(req, res)=>{
+        const id = req.params.id;
+        const query =  {_id: new ObjectId(id)}
+        const result = await moviesCollection.deleteOne(query)
+        res.send(result)
+        
+    })
+    app.post('/favorite', async(req, res)=>{
+      const data = req.body;
+        const result = await favoritesCollection.insertOne(data)
+        res.send(result)
+
+    })
+
+    app.get('/favorite/:id/:email', async(req, res)=>{
+      const id = req.params.id;
+      const email =req.params.email
+      // console.log(id, email);
+      const query = {id: (id), email:email}
+     
+      const result = await favoritesCollection.findOne(query)
+      if (result){
+        res.send(result)
+      }
+      else{
+        res.send({"error": "not find"})
+      }
+    })
+
+
+    app.get('/my-favorite/:email', async(req, res)=>{
+      const email = req.params.email
+     const result = await favoritesCollection.find({email:email}).toArray()
+      console.log(result);
+      res.send(result)
+
+    })
+
+    app.delete('/favorite-delete/:id', async(req, res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await favoritesCollection.deleteOne(query)
+      res.send(result)
+    })
+
+    app.get('/', async(req, res)=>{
+      const result = await moviesCollection.find().limit(6).toArray()
+      res.send(result)
+    })
+
+    app.put('/movie/update/:id', async(req, res)=>{
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)}
+      const options = {upsert:true}
+      const updateMovie = req.body;
+      const movie = {
+        $set:{
+          poster: updateMovie.poster,
+          title: updateMovie.title,
+          genre: updateMovie.genre,
+          duration: updateMovie.duration,
+          year: updateMovie.year,
+          rating: updateMovie.rating,
+          summary: updateMovie.summary,
+        }
+      }
+      const result = await moviesCollection.updateOne(filter, movie, options)
+      res.send(result)
+    })
+
+   
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
