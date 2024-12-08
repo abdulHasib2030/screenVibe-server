@@ -46,7 +46,7 @@ async function run() {
           result = await moviesCollection.find().toArray();
       }
 
-  const actionDrama = await moviesCollection.find({ genre: { $in: ['drama', 'comedy'] } }).toArray();
+  const actionDrama = await moviesCollection.find({ genres: { $in: ['drama', 'action'] } }).toArray();
     
         res.send({result, actionDrama})
     })
