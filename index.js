@@ -33,7 +33,7 @@ async function run() {
     app.get('/all-movies', async(req, res)=>{
         // const cursor = moviesCollection.find()
         // const result = await cursor.toArray()
-        // console.log(result);
+       
       const {searchParams} = req.query
 
       let option = {};
@@ -53,7 +53,7 @@ async function run() {
 
     app.post('/add-movie',  async(req, res)=>{
        const newMovie = req.body;
-    //    console.log(newMovie);
+   
        const result = await moviesCollection.insertOne(newMovie)
         res.send(result)
     })
@@ -124,12 +124,12 @@ async function run() {
       const filter = {_id: new ObjectId(id)}
       const options = {upsert:true}
       const updateMovie = req.body;
-      console.log(updateMovie);
+      // console.log(updateMovie);
       const movie = {
         $set:{
           poster: updateMovie.poster,
           title: updateMovie.title,
-          genre: updateMovie.genre,
+          genres: updateMovie.genres,
           duration: updateMovie.duration,
           year: updateMovie.year,
           rating: updateMovie.rating,
